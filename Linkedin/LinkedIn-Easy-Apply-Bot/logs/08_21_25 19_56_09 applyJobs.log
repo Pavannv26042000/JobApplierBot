@@ -1,0 +1,7 @@
+./logs/21-Aug-25 19:56:09::__main__::INFO::{'phone_number': 7899569686, 'profile_path': '', 'positions': ['Software Engineer', 'Software Developer', 'Java Developer', 'Spring Developer', 'GoLang Developer'], 'locations': ['Bengaluru', 'Remote'], 'gemini_api_key': 'AIzaSyCHD3BOd8-aNp_KCEs_JE0S7uc7Zfy3NOE', 'salary': '60,000', 'rate': 25, 'uploads': {'Resume': 'C:\\Users\\pavan\\Downloads\\Pavan_NV_Resume.pdf', 'Cover Letter': 'C:\\Users\\pavan\\Downloads\\Pavan_NV_Resume.pdf'}, 'output_filename': ['/Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv', 'Alten'], 'experience_level': [2, 3]}
+./logs/21-Aug-25 19:56:09::__main__::INFO::Welcome to Easy Apply Bot
+./logs/21-Aug-25 19:56:09::__main__::INFO::current directory is : C:\Users\pavan\Desktop\JobApplierBot\Linkedin\LinkedIn-Easy-Apply-Bot
+./logs/21-Aug-25 19:56:09::__main__::INFO::Please wait while we prepare the bot for you
+./logs/21-Aug-25 19:56:09::__main__::INFO::Applying for experience level roles: Associate, Mid-Senior level
+./logs/21-Aug-25 19:56:09::__main__::INFO::[Errno 2] No such file or directory: '/Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv'   jobIDs could not be loaded from CSV /Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv
+./logs/21-Aug-25 19:56:12::__main__::INFO::Logging in.....Please wait :)  

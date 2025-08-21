@@ -26,11 +26,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
-# ChromeDriverManager = ChromeDriverManager.ChromeDriverManager
 
+# Additional imports for Gemini integration and PDF parsing
+import google.generativeai as genai
+import PyPDF2
 
 log = logging.getLogger(__name__)
-
 
 def setupLogger() -> None:
     dt: str = datetime.strftime(datetime.now(), "%m_%d_%y %H_%M_%S ")
@@ -48,7 +49,6 @@ def setupLogger() -> None:
     c_handler.setFormatter(c_format)
     log.addHandler(c_handler)
 
-
 class EasyApplyBot:
     setupLogger()
     # MAX_SEARCH_TIME is 10 hours by default, feel free to modify it
@@ -65,7 +65,8 @@ class EasyApplyBot:
                  filename='output.csv',
                  blacklist=[],
                  blackListTitles=[],
-                 experience_level=[]
+                 experience_level=[],
+                 gemini_api_key=None
                  ) -> None:
 
         log.info("Welcome to Easy Apply Bot")
@@ -85,7 +86,6 @@ class EasyApplyBot:
             log.info("Applying for experience level roles: " + ", ".join(applied_levels))
         else:
             log.info("Applying for all experience levels")
-        
 
         self.uploads = uploads
         self.salary = salary
@@ -102,7 +102,6 @@ class EasyApplyBot:
         self.start_linkedin(username, password)
         self.phone_number = phone_number
         self.experience_level = experience_level
-
 
         self.locator = {
             "next": (By.CSS_SELECTOR, "button[aria-label='Continue to next step']"),
@@ -121,23 +120,48 @@ class EasyApplyBot:
             "text_select": (By.CLASS_NAME, "artdeco-text-input--input"),
             "2fa_oneClick": (By.ID, 'reset-password-submit-button'),
             "easy_apply_button": (By.XPATH, '//button[contains(@class, "jobs-apply-button")]')
-
         }
 
-        #initialize questions and answers file
+        # Initialize questions and answers file
         self.qa_file = Path("qa.csv")
         self.answers = {}
 
-        #if qa file does not exist, create it
+        # If qa file does not exist, create it
         if self.qa_file.is_file():
             df = pd.read_csv(self.qa_file)
             for index, row in df.iterrows():
                 self.answers[row['Question']] = row['Answer']
-        #if qa file does exist, load it
         else:
             df = pd.DataFrame(columns=["Question", "Answer"])
             df.to_csv(self.qa_file, index=False, encoding='utf-8')
 
+        # Extract resume text for Gemini context
+        self.resume_text = ""
+        if "Resume" in self.uploads:
+            self.resume_text = self.extract_resume_text(self.uploads["Resume"])
+            log.info("Resume text extracted successfully for Gemini queries.")
+
+        # Set up Gemini API
+        if gemini_api_key:
+            genai.configure(api_key=gemini_api_key)
+            self.gemini_model = genai.GenerativeModel('gemini-pro')  # Use 'gemini-pro' or appropriate model
+            log.info("Gemini API initialized successfully.")
+        else:
+            log.warning("Gemini API key not provided. Falling back to manual/user-provided answers.")
+            self.gemini_model = None
+
+    def extract_resume_text(self, pdf_path):
+        """Extract text from the resume PDF for use in Gemini prompts."""
+        try:
+            text = ""
+            with open(pdf_path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                for page in reader.pages:
+                    text += page.extract_text() or ""
+            return text
+        except Exception as e:
+            log.error(f"Failed to extract resume text: {e}")
+            return ""
 
     def get_appliedIDs(self, filename) -> list | None:
         try:
@@ -229,8 +253,6 @@ class EasyApplyBot:
             if len(combos) > 500:
                 break
 
-    # self.finish_apply() --> this does seem to cause more harm than good, since it closes the browser which we usually don't want, other conditions will stop the loop and just break out
-
     def applications_loop(self, position, location):
 
         count_application = 0
@@ -261,9 +283,6 @@ class EasyApplyBot:
 
                 if self.is_present(self.locator["search"]):
                     scrollresults = self.get_elements("search")
-                    #     self.browser.find_element(By.CLASS_NAME,
-                    #     "jobs-search-results-list"
-                    # )
                     # Selenium only detects visible elements; if we scroll to the bottom too fast, only 8-9 results will be loaded into IDs list
                     for i in range(300, 3000, 100):
                         self.browser.execute_script("arguments[0].scrollTo(0, {})".format(i), scrollresults[0])
@@ -273,9 +292,6 @@ class EasyApplyBot:
                 # get job links, (the following are actually the job card objects)
                 if self.is_present(self.locator["links"]):
                     links = self.get_elements("links")
-                # links = self.browser.find_elements("xpath",
-                #     '//div[@data-job-id]'
-                # )
 
                     jobIDs = {} #{Job id: processed_status}
                 
@@ -304,6 +320,7 @@ class EasyApplyBot:
 
             except Exception as e:
                 print(e)
+
     def apply_loop(self, jobIDs):
         for jobID in jobIDs:
             if jobIDs[jobID] == "To be processed":
@@ -312,7 +329,7 @@ class EasyApplyBot:
                     log.info(f"Applied to {jobID}")
                 else:
                     log.info(f"Failed to apply to {jobID}")
-                jobIDs[jobID] == applied
+                jobIDs[jobID] = applied  # Note: Fixed == to =
 
     def apply_to_job(self, jobID):
         # #self.avoid_lock() # annoying
@@ -329,7 +346,7 @@ class EasyApplyBot:
 
         # word filter to skip positions not wanted
         if button is not False:
-            if any(word in self.browser.title for word in blackListTitles):
+            if any(word in self.browser.title for word in self.blackListTitles):  # Fixed to self.blackListTitles
                 log.info('skipping this application, a blacklisted keyword was found in the job position')
                 string_easy = "* Contains blacklisted keyword"
                 result = False
@@ -389,9 +406,6 @@ class EasyApplyBot:
         EasyApplyButton = False
         try:
             buttons = self.get_elements("easy_apply_button")
-            # buttons = self.browser.find_elements("xpath",
-            #     '//button[contains(@class, "jobs-apply-button")]'
-            # )
             for button in buttons:
                 if "Easy Apply" in button.text:
                     EasyApplyButton = button
@@ -402,7 +416,6 @@ class EasyApplyBot:
         except Exception as e: 
             print("Exception:",e)
             log.debug("Easy Apply button not found")
-
 
         return EasyApplyButton
 
@@ -415,9 +428,7 @@ class EasyApplyBot:
                 field_input.clear()
                 field_input.send_keys(self.phone_number)
 
-
         return
-
 
     def get_elements(self, type) -> list:
         elements = []
@@ -436,7 +447,6 @@ class EasyApplyBot:
                                                   button_locator[1])) > 0
 
         try:
-            #time.sleep(random.uniform(1.5, 2.5))
             next_locator = (By.CSS_SELECTOR,
                             "button[aria-label='Continue to next step']")
             review_locator = (By.CSS_SELECTOR,
@@ -446,16 +456,15 @@ class EasyApplyBot:
             error_locator = (By.CLASS_NAME,"artdeco-inline-feedback__message")
             upload_resume_locator = (By.XPATH, '//span[text()="Upload resume"]')
             upload_cv_locator = (By.XPATH, '//span[text()="Upload cover letter"]')
-            # WebElement upload_locator = self.browser.find_element(By.NAME, "file")
             follow_locator = (By.CSS_SELECTOR, "label[for='follow-company-checkbox']")
 
             submitted = False
             loop = 0
             while loop < 2:
+                loop += 1  # Fixed: Increment loop to prevent infinite loop
                 time.sleep(1)
                 # Upload resume
                 if is_present(upload_resume_locator):
-                    #upload_locator = self.browser.find_element(By.NAME, "file")
                     try:
                         resume_locator = self.browser.find_element(By.XPATH, "//*[contains(@id, 'jobs-document-upload-file-input-upload-resume')]")
                         resume = self.uploads["Resume"]
@@ -470,13 +479,6 @@ class EasyApplyBot:
                     cv = self.uploads["Cover Letter"]
                     cv_locator = self.browser.find_element(By.XPATH, "//*[contains(@id, 'jobs-document-upload-file-input-upload-cover-letter')]")
                     cv_locator.send_keys(cv)
-
-                    #time.sleep(random.uniform(4.5, 6.5))
-                elif len(self.get_elements("follow")) > 0:
-                    elements = self.get_elements("follow")
-                    for element in elements:
-                        button = self.wait.until(EC.element_to_be_clickable(element))
-                        button.click()
 
                 if len(self.get_elements("submit")) > 0:
                     elements = self.get_elements("submit")
@@ -511,13 +513,11 @@ class EasyApplyBot:
                                 submitted = False
                                 break
                         continue
-                        #add explicit wait
                     
                     else:
                         log.info("Application not submitted")
                         time.sleep(2)
                         break
-                    # self.process_questions()
 
                 elif len(self.get_elements("next")) > 0:
                     elements = self.get_elements("next")
@@ -541,106 +541,73 @@ class EasyApplyBot:
             log.error(e)
             log.error("cannot apply to this job")
             pass
-            #raise (e)
 
         return submitted
+
     def process_questions(self):
         time.sleep(1)
-        form = self.get_elements("fields") #self.browser.find_elements(By.CLASS_NAME, "jobs-easy-apply-form-section__grouping")
+        form = self.get_elements("fields")
         for field in form:
-            question = field.text
-            answer = self.ans_question(question.lower())
-            #radio button
+            question = field.text.lower()  # Normalize to lower for consistency
+            answer = self.ans_question(question)
+            # radio button
             if self.is_present(self.locator["radio_select"]):
                 try:
-                    input = field.find_element(By.CSS_SELECTOR, "input[type='radio'][value={}]".format(answer))
-                    input.execute_script("arguments[0].click();", input)
+                    input_elem = field.find_element(By.CSS_SELECTOR, f"input[type='radio'][value='{answer}']")
+                    input_elem.execute_script("arguments[0].click();", input_elem)
                 except Exception as e:
                     log.error(e)
                     continue
-            #multi select
+            # multi select
             elif self.is_present(self.locator["multi_select"]):
                 try:
-                    input = field.find_element(self.locator["multi_select"])
-                    input.send_keys(answer)
+                    input_elem = field.find_element(self.locator["multi_select"][0], self.locator["multi_select"][1])
+                    input_elem.send_keys(answer)
                 except Exception as e:
                     log.error(e)
                     continue
             # text box
             elif self.is_present(self.locator["text_select"]):
                 try:
-                    input = field.find_element(self.locator["text_select"])
-                    input.send_keys(answer)
+                    input_elem = field.find_element(self.locator["text_select"][0], self.locator["text_select"][1])
+                    input_elem.send_keys(answer)
                 except Exception as e:
                     log.error(e)
                     continue
 
-            elif self.is_present(self.locator["text_select"]):
-               pass
+    def ans_question(self, question):
+        # Check if already answered
+        if question in self.answers:
+            return self.answers[question]
 
-            if "Yes" or "No" in answer: #radio button
-                try: #debug this
-                    input = form.find_element(By.CSS_SELECTOR, "input[type='radio'][value={}]".format(answer))
-                    form.execute_script("arguments[0].click();", input)
-                except:
-                    pass
-
-
-            else:
-                input = form.find_element(By.CLASS_NAME, "artdeco-text-input--input")
-                input.send_keys(answer)
-
-    def ans_question(self, question): #refactor this to an ans.yaml file
-        answer = None
-        if "how many" in question:
-            answer = "1"
-        elif "experience" in question:
-            answer = "1"
-        elif "sponsor" in question:
-            answer = "No"
-        elif 'do you ' in question:
-            answer = "Yes"
-        elif "have you " in question:
-            answer = "Yes"
-        elif "US citizen" in question:
-            answer = "Yes"
-        elif "are you " in question:
-            answer = "Yes"
-        elif "salary" in question:
-            answer = self.salary
-        elif "can you" in question:
-            answer = "Yes"
-        elif "gender" in question:
-            answer = "Male"
-        elif "race" in question:
-            answer = "Wish not to answer"
-        elif "lgbtq" in question:
-            answer = "Wish not to answer"
-        elif "ethnicity" in question:
-            answer = "Wish not to answer"
-        elif "nationality" in question:
-            answer = "Wish not to answer"
-        elif "government" in question:
-            answer = "I do not wish to self-identify"
-        elif "are you legally" in question:
-            answer = "Yes"
+        if self.gemini_model and self.resume_text:
+            try:
+                # Prompt Gemini with resume context
+                prompt = (
+                    f"Based on the following resume content:\n{self.resume_text}\n\n"
+                    f"Answer the following job application question accurately and concisely: {question}\n"
+                    "Provide only the direct answer (e.g., 'Yes', 'No', a number, or short phrase). No explanations."
+                )
+                response = self.gemini_model.generate_content(prompt)
+                answer = response.text.strip()
+                log.info(f"Gemini answered question '{question}' with: {answer}")
+            except Exception as e:
+                log.error(f"Gemini API call failed: {e}")
+                answer = None
         else:
-            log.info("Not able to answer question automatically. Please provide answer")
-            #open file and document unanswerable questions, appending to it
-            answer = "user provided"
+            answer = None
+
+        # Fallback if Gemini fails or not available
+        if not answer:
+            log.info(f"Not able to answer question automatically via Gemini. Please provide answer for: {question}")
+            answer = "user provided"  # Or input() for manual, but keeping as is
             time.sleep(15)
 
-            # df = pd.DataFrame(self.answers, index=[0])
-            # df.to_csv(self.qa_file, encoding="utf-8")
-        log.info("Answering question: " + question + " with answer: " + answer)
-
-        # Append question and answer to the CSV
-        if question not in self.answers:
-            self.answers[question] = answer
-            # Append a new question-answer pair to the CSV file
-            new_data = pd.DataFrame({"Question": [question], "Answer": [answer]})
-            new_data.to_csv(self.qa_file, mode='a', header=False, index=False, encoding='utf-8')
-            log.info(f"Appended to QA file: '{question}' with answer: '{answer}'.")
+        # Save to answers dict and CSV
+        self.answers[question] = answer
+        new_data = pd.DataFrame({"Question": [question], "Answer": [answer]})
+        new_data.to_csv(self.qa_file, mode='a', header=False, index=False, encoding='utf-8')
+        log.info(f"Appended to QA file: '{question}' with answer: '{answer}'.")
 
         return answer
 
@@ -677,17 +644,12 @@ class EasyApplyBot:
         experience_level_str = ",".join(map(str, experience_level)) if experience_level else ""
         experience_level_param = f"&f_E={experience_level_str}" if experience_level_str else ""
         self.browser.get(
-            # URL for jobs page
             "https://www.linkedin.com/jobs/search/?f_LF=f_AL&keywords=" +
             position + location + "&start=" + str(jobs_per_page) + experience_level_param)
         #self.avoid_lock()
         log.info("Loading next job page?")
         self.load_page()
         return (self.browser, jobs_per_page)
-
-    # def finish_apply(self) -> None:
-    #     self.browser.close()
-
 
 if __name__ == '__main__':
 
@@ -702,7 +664,6 @@ if __name__ == '__main__':
     assert parameters['username'] is not None
     assert parameters['password'] is not None
     assert parameters['phone_number'] is not None
-
 
     if 'uploads' in parameters.keys() and type(parameters['uploads']) == list:
         raise Exception("uploads read from the config file appear to be in list format" +
@@ -732,8 +693,7 @@ if __name__ == '__main__':
                        filename=output_filename,
                        blacklist=blacklist,
                        blackListTitles=blackListTitles,
-                       experience_level=parameters.get('experience_level', [])
+                       experience_level=parameters.get('experience_level', []),
+                       gemini_api_key=parameters.get('gemini_api_key')  # Added Gemini API key from config
                        )
     bot.start_apply(positions, locations)
-
-

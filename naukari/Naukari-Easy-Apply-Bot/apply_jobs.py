@@ -11,61 +11,63 @@ import os
 from pathlib import Path
 import yaml
 
-# === 1. Dynamic user profile path (Windows) ===
+# === 1. Load Configuration ===
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+# Extract configurations
+NAUKRI_CONFIG = config.get("naukri", {})
+EMAIL = NAUKRI_CONFIG.get("email")
+PASSWORD = NAUKRI_CONFIG.get("password")
+ROLE = NAUKRI_CONFIG.get("role")
+LOCATION = NAUKRI_CONFIG.get("location", "")
+MAX_PAGES = NAUKRI_CONFIG.get("max_pages", 5)
+MAX_APPLICATIONS = NAUKRI_CONFIG.get("max_applications", 10)
+GEMINI_API_KEY = NAUKRI_CONFIG.get("gemini_api_key")
+
+# Browser configuration
+BROWSER_CONFIG = config.get("browser", {})
+USE_DEFAULT_PROFILE = BROWSER_CONFIG.get("use_default_profile", False)
+HEADLESS = BROWSER_CONFIG.get("headless", False)
+WINDOW_SIZE = BROWSER_CONFIG.get("window_size", "1920,1080")
+
+# === 2. Dynamic User Profile Path (Windows) ===
 user = os.getlogin()
 base_profile_path = Path(f"C:/Users/{user}/AppData/Local/Google/Chrome/User Data")
 
-# === 2. Chrome Options ===
+# === 3. Chrome Options ===
 chrome_options = Options()
-
-# Use Chrome default profile (remove this if not needed)
-# chrome_options.add_argument(f"user-data-dir={base_profile_path}")
-# chrome_options.add_argument("profile-directory=Default")  # Or "Profile 1", optional
-
 chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 chrome_options.add_experimental_option('useAutomationExtension', False)
-# chrome_options.add_argument("--headless=new")  # Uncomment to run headless
-chrome_options.add_argument("--window-size=1920,1080")
+
+if USE_DEFAULT_PROFILE:
+    chrome_options.add_argument(f"user-data-dir={base_profile_path}")
+    chrome_options.add_argument("profile-directory=Default")
+
+if HEADLESS:
+    chrome_options.add_argument("--headless=new")
+
+chrome_options.add_argument(f"--window-size={WINDOW_SIZE}")
 
 prefs = {
     "credentials_enable_service": False,
     "profile.password_manager_enabled": False
 }
+chrome_options.add_experimental_option("prefs", prefs)
 
-
-
-
-# === 3. Auto-fetch ChromeDriver ===
+# === 4. Auto-fetch ChromeDriver ===
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 wait = WebDriverWait(driver, 10)
 
-# === 4. Confirm it's working ===
+# === 5. Confirm Browser Launch ===
 driver.get("https://www.google.com")
 print("Browser launched successfully with dynamic paths.")
 
-
-
-# service = Service(driver_path)
-# driver = webdriver.Chrome(service=service, options=chrome_options)
-wait = WebDriverWait(driver, 10)
-
-# Load configuration from config.yaml
-with open("Config.yaml", "r") as f:
-    config = yaml.safe_load(f)
-
-EMAIL = config["naukri"]["email"]
-PASSWORD = config["naukri"]["password"]
-ROLE = config["naukri"]["role"]
-LOCATION = config["naukri"]["location"]
-MAX_PAGES = config["naukri"]["max_pages"]
-MAX_APPLICATIONS = config["naukri"]["max_applications"]
-
+# Initialize counters
 applied = 0  # Count of jobs applied successfully
 failed_job_links = []
 failed = 0   # Count of jobs failed
-
-
 
 def login_to_naukri():
     print("Logging into Naukri...")
@@ -92,7 +94,6 @@ def login_to_naukri():
     except Exception as e:
         print(f"Login failed: {type(e).__name__}: {e}")
         input("If there's a CAPTCHA or other blocker, solve it in the browser and press Enter to continue...")
-
 
 def search_jobs():
     """Search for job openings on Naukri.com and return job links"""
@@ -144,8 +145,7 @@ def search_jobs():
 
     return job_links
 
-
-#Login 
+# Login
 login_to_naukri()
 # Get job listings
 job_links = search_jobs()
@@ -233,7 +233,7 @@ for job_url in job_links:
                     options_str = "\n".join(options)
                     user_input_message = f"{question}\n{options_str}"
 
-                    selected_option = int(bard_flash_response(user_input_message))
+                    selected_option = int(bard_flash_response(user_input_message, api_key=GEMINI_API_KEY))
 
                     selected_button = radio_buttons[selected_option - 1].find_element(By.CSS_SELECTOR, "input")
                     driver.execute_script("arguments[0].click();", selected_button)
@@ -261,7 +261,7 @@ for job_url in job_links:
                     last_question_text = li_elements[-1].text if li_elements else ""
                     print("Last question text:", last_question_text)
 
-                    response = bard_flash_response(last_question_text)
+                    response = bard_flash_response(last_question_text, api_key=GEMINI_API_KEY)
                     input_field = driver.find_element(By.XPATH, "//div[@class='textArea']")
 
                     # Special handling for date fields
@@ -321,7 +321,6 @@ if failed_job_links:
     with open("failed_jobs.txt", "w") as f:
         f.write("\n".join(failed_job_links))
     print(f"\n📝 Saved {len(failed_job_links)} failed job links to 'failed_jobs.txt'")
-
 
 # Close the browser
 driver.quit()
