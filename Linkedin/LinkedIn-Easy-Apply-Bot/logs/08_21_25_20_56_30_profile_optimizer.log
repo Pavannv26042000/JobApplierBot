@@ -1,0 +1,36 @@
+21-Aug-25 20:56:30::__main__::INFO::Initializing LinkedIn Profile Optimizer
+21-Aug-25 20:56:32::__main__::INFO::Resume text extracted successfully
+21-Aug-25 20:56:32::__main__::INFO::Gemini API initialized successfully
+21-Aug-25 20:56:32::__main__::INFO::Logging into LinkedIn...
+21-Aug-25 20:56:51::__main__::INFO::Login successful
+21-Aug-25 20:56:51::__main__::INFO::Starting LinkedIn profile optimization
+21-Aug-25 20:56:51::__main__::INFO::Optimizing profile headline
+21-Aug-25 20:56:52::__main__::ERROR::Failed to generate headline: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+21-Aug-25 20:57:27::__main__::ERROR::Failed to update headline: Message: 
+Stacktrace:
+	GetHandleVerifier [0x0x60ffc3+65331]
+	GetHandleVerifier [0x0x610004+65396]
+	(No symbol) [0x0x403f63]
+	(No symbol) [0x0x44c99e]
+	(No symbol) [0x0x44cd3b]
+	(No symbol) [0x0x4953d2]
+	(No symbol) [0x0x471524]
+	(No symbol) [0x0x492bcb]
+	(No symbol) [0x0x4712d6]
+	(No symbol) [0x0x440910]
+	(No symbol) [0x0x441784]
+	GetHandleVerifier [0x0x8538b3+2439203]
+	GetHandleVerifier [0x0x84eae2+2419282]
+	GetHandleVerifier [0x0x63712a+225434]
+	GetHandleVerifier [0x0x626e08+159096]
+	GetHandleVerifier [0x0x62dd5d+187597]
+	GetHandleVerifier [0x0x617ad8+96840]
+	GetHandleVerifier [0x0x617c62+97234]
+	GetHandleVerifier [0x0x60277a+9962]
+	BaseThreadInitThunk [0x0x77055d49+25]
+	RtlInitializeExceptionChain [0x0x7761d09b+107]
+	RtlGetAppContainerNamedObjectPath [0x0x7761d021+561]
+
+21-Aug-25 20:57:27::__main__::INFO::Optimizing about section
+21-Aug-25 20:57:28::__main__::ERROR::Failed to generate about section: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+21-Aug-25 20:57:29::__main__::INFO::Closing browser

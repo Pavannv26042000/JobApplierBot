@@ -1,0 +1,10 @@
+21-Aug-25 20:59:23::__main__::INFO::Initializing LinkedIn Profile Optimizer
+21-Aug-25 20:59:25::__main__::INFO::Resume text extracted successfully
+21-Aug-25 20:59:25::__main__::INFO::Gemini API initialized successfully
+21-Aug-25 20:59:25::__main__::INFO::Logging into LinkedIn...
+21-Aug-25 20:59:43::__main__::INFO::Login successful
+21-Aug-25 20:59:43::__main__::INFO::Starting LinkedIn profile optimization
+21-Aug-25 20:59:43::__main__::INFO::Optimizing profile headline
+21-Aug-25 20:59:44::__main__::ERROR::Failed to generate headline: 404 models/gemini-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+21-Aug-25 21:00:05::__main__::INFO::Closing browser
+21-Aug-25 21:00:05::urllib3.connectionpool::WARNING::Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)': /session/c7ca98a6938b33ec2f92930e15dae742

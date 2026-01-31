@@ -1,41 +1,40 @@
-username: yourMailID
-password: Password
-phone_number: 7899569686
+linkedin:
+  username: "nvpavan150@gmail.com"
+  password: "Pavan@7899"
+  resume_path: "C:/Users/pavan/Downloads/Pavan_NV_Resume.pdf"
+  job_roles:
+    - "Software Engineer"
+    - "Software Developer"
+    - "Java Developer"
+    - "Spring Developer"
+    - "GoLang Developer"
+  gemini_api_key: "AIzaSyB8BhzQsBe5IpZtht3ZKMndhdPa1Ru9wEw"
 
-profile_path: '' #can be empty, will default to 'C:\Users\<user>\AppData\Local\Google\Chrome\User Data\Default'
+easy_apply_bot:
+  phone_number: "7899569686"
+  positions:  # Add this section
+    - "Software Engineer"
+    - "Software Developer"
+    - "Java Developer"
+    - "Spring Developer"
+    - "GoLang Developer"
+  locations:
+    - "Bengaluru"
+    - "Remote"
+  salary: "60000"
+  rate: 25
+  uploads:
+    Resume: "C:/Users/pavan/Downloads/Pavan_NV_Resume.pdf"
+    Cover Letter: "C:/Users/pavan/Downloads/Pavan_NV_Resume.pdf"
+  output_filename: "C:/Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv"
+  blacklist:
+    - "Alten"
+  blackListTitles: []
+  experience_level:
+    - 2  # Associate
+    - 3  # Mid-Senior level
 
-
-positions:
-- Software Engineer
-- Software Developer
-- Java Developer
-- Spring Developer
-- GoLang Developer
-
-
-locations:
-- Bengaluru
-- Remote
-gemini_api_key: AIzaSyCHD3BOd8-aNp_KCEs_JE0S7uc7Zfy3NOE  # Replace with your actual API key
-salary: 60,000
-rate: 25
-# --------- Optional Parameters -------
-uploads:
-  Resume: C:\Users\pavan\Downloads\Pavan_NV_Resume.pdf
-  Cover Letter: C:\Users\pavan\Downloads\Pavan_NV_Resume.pdf
-  #Photo: # PATH TO photo
-
-
-output_filename:
-- /Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv
-
-# blacklist:
-- Alten
-
-experience_level:
-  # - 1 # Entry level
-  - 2 # Associate
-  - 3 # Mid-Senior level
-  # - 4 # Director
-  # - 5 # Executive
-  # - 6 # Internship
+browser:
+  headless: false
+  window_size: "1920,1080"
+  use_default_profile: false

@@ -1,0 +1,32 @@
+./logs/21-Aug-25 20:51:26::__main__::INFO::Welcome to Easy Apply Bot
+./logs/21-Aug-25 20:51:26::__main__::INFO::current directory is : C:\Users\pavan\Desktop\JobApplierBot\Linkedin\LinkedIn-Easy-Apply-Bot
+./logs/21-Aug-25 20:51:26::__main__::INFO::Please wait while we prepare the bot for you
+./logs/21-Aug-25 20:51:26::__main__::INFO::Applying for experience level roles: Associate, Mid-Senior level
+./logs/21-Aug-25 20:51:26::__main__::INFO::[Errno 2] No such file or directory: 'C:/Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv'   jobIDs could not be loaded from CSV C:/Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv
+./logs/21-Aug-25 20:51:28::__main__::INFO::Logging in.....Please wait :)  
+./logs/21-Aug-25 20:51:33::__main__::ERROR::Login failed: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=139.0.7258.129)
+Stacktrace:
+	GetHandleVerifier [0x0x60ffc3+65331]
+	GetHandleVerifier [0x0x610004+65396]
+	(No symbol) [0x0x403f63]
+	(No symbol) [0x0x3f38e0]
+	(No symbol) [0x0x411709]
+	(No symbol) [0x0x477e4c]
+	(No symbol) [0x0x4924d9]
+	(No symbol) [0x0x4712d6]
+	(No symbol) [0x0x440910]
+	(No symbol) [0x0x441784]
+	GetHandleVerifier [0x0x8538b3+2439203]
+	GetHandleVerifier [0x0x84eae2+2419282]
+	GetHandleVerifier [0x0x63712a+225434]
+	GetHandleVerifier [0x0x626e08+159096]
+	GetHandleVerifier [0x0x62dd5d+187597]
+	GetHandleVerifier [0x0x617ad8+96840]
+	GetHandleVerifier [0x0x617c62+97234]
+	GetHandleVerifier [0x0x60277a+9962]
+	BaseThreadInitThunk [0x0x77055d49+25]
+	RtlInitializeExceptionChain [0x0x7761d09b+107]
+	RtlGetAppContainerNamedObjectPath [0x0x7761d021+561]
+

@@ -1,0 +1,48 @@
+./logs/21-Aug-25 20:54:24::__main__::INFO::Welcome to Easy Apply Bot
+./logs/21-Aug-25 20:54:24::__main__::INFO::current directory is : C:\Users\pavan\Desktop\JobApplierBot\Linkedin\LinkedIn-Easy-Apply-Bot
+./logs/21-Aug-25 20:54:24::__main__::INFO::Please wait while we prepare the bot for you
+./logs/21-Aug-25 20:54:24::__main__::INFO::Applying for experience level roles: Associate, Mid-Senior level
+./logs/21-Aug-25 20:54:24::__main__::INFO::[Errno 2] No such file or directory: 'C:/Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv'   jobIDs could not be loaded from CSV C:/Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv
+./logs/21-Aug-25 20:54:26::__main__::INFO::Logging in.....Please wait :)  
+./logs/21-Aug-25 20:54:45::__main__::INFO::Login successful
+./logs/21-Aug-25 20:54:45::__main__::INFO::Resume text extracted successfully for Gemini queries.
+./logs/21-Aug-25 20:54:45::__main__::INFO::Gemini API initialized successfully.
+./logs/21-Aug-25 20:54:45::__main__::INFO::Applying to GoLang Developer: Remote
+./logs/21-Aug-25 20:54:45::__main__::INFO::Looking for jobs.. Please wait..
+./logs/21-Aug-25 20:54:48::__main__::INFO::Loading next job page?
+./logs/21-Aug-25 20:54:56::__main__::INFO::Looking for jobs.. Please wait..
+./logs/21-Aug-25 20:54:56::__main__::INFO::59.0 minutes left in this search
+./logs/21-Aug-25 20:54:56::__main__::DEBUG::Sleeping for 2.0
+./logs/21-Aug-25 20:55:09::__main__::DEBUG::Easy Apply button not found
+./logs/21-Aug-25 20:55:09::__main__::INFO::Clicking the EASY apply button
+./logs/21-Aug-25 20:55:12::__main__::INFO::
+Position 4289236240:
+ (15) Software Engineer | Nethrix Solutions | LinkedIn 
+ *Did not apply: Failed to send Resume 
+
+./logs/21-Aug-25 20:55:12::__main__::INFO::59.0 minutes left in this search
+./logs/21-Aug-25 20:55:12::__main__::DEBUG::Sleeping for 1.9
+./logs/21-Aug-25 20:55:19::__main__::INFO::Loading next job page?
+./logs/21-Aug-25 20:55:27::__main__::INFO::59.0 minutes left in this search
+./logs/21-Aug-25 20:55:27::__main__::DEBUG::Sleeping for 2.7
+./logs/21-Aug-25 20:55:40::__main__::DEBUG::Easy Apply button not found
+./logs/21-Aug-25 20:55:40::__main__::INFO::Clicking the EASY apply button
+./logs/21-Aug-25 20:55:44::__main__::INFO::
+Position 4288724582:
+ (15) Software Engineer | DigsFact | LinkedIn 
+ *Did not apply: Failed to send Resume 
+
+./logs/21-Aug-25 20:55:44::__main__::INFO::59.0 minutes left in this search
+./logs/21-Aug-25 20:55:44::__main__::DEBUG::Sleeping for 2.0
+./logs/21-Aug-25 20:55:50::__main__::INFO::Loading next job page?
+./logs/21-Aug-25 20:55:58::__main__::INFO::58.0 minutes left in this search
+./logs/21-Aug-25 20:55:58::__main__::DEBUG::Sleeping for 2.6
+./logs/21-Aug-25 20:56:12::__main__::DEBUG::Easy Apply button not found
+./logs/21-Aug-25 20:56:12::__main__::INFO::Clicking the EASY apply button
+./logs/21-Aug-25 20:56:16::__main__::INFO::
+Position 4289236240:
+ (15) Software Engineer | Nethrix Solutions | LinkedIn 
+ *Did not apply: Failed to send Resume 
+
+./logs/21-Aug-25 20:56:16::__main__::INFO::58.0 minutes left in this search
+./logs/21-Aug-25 20:56:16::__main__::DEBUG::Sleeping for 2.9

@@ -1,0 +1,5 @@
+./logs/20-Dec-25 15:00:07::__main__::INFO::Welcome to Easy Apply Bot
+./logs/20-Dec-25 15:00:07::__main__::INFO::current directory is : C:\Users\pavan\OneDrive\Desktop\JobApplierBot\Linkedin\LinkedIn-Easy-Apply-Bot
+./logs/20-Dec-25 15:00:07::__main__::INFO::Please wait while we prepare the bot for you
+./logs/20-Dec-25 15:00:07::__main__::INFO::Applying for experience level roles: Associate, Mid-Senior level
+./logs/20-Dec-25 15:00:07::__main__::INFO::[Errno 2] No such file or directory: 'C:/Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv'   jobIDs could not be loaded from CSV C:/Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv

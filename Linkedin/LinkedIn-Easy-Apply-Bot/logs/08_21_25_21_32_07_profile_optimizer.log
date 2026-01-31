@@ -1,0 +1,84 @@
+21-Aug-25 21:32:07::__main__::INFO::Initializing LinkedIn Profile Optimizer
+21-Aug-25 21:32:09::__main__::INFO::Resume text extracted successfully
+21-Aug-25 21:32:09::__main__::INFO::Gemini API initialized successfully
+21-Aug-25 21:32:09::__main__::INFO::Logging into LinkedIn...
+21-Aug-25 21:32:27::__main__::INFO::Login successful
+21-Aug-25 21:32:27::__main__::INFO::Starting LinkedIn profile optimization
+21-Aug-25 21:32:27::__main__::INFO::Optimizing profile headline
+21-Aug-25 21:33:12::__main__::ERROR::Failed to update headline: Message: 
+Stacktrace:
+	GetHandleVerifier [0x0x60ffc3+65331]
+	GetHandleVerifier [0x0x610004+65396]
+	(No symbol) [0x0x403f63]
+	(No symbol) [0x0x44c99e]
+	(No symbol) [0x0x44cd3b]
+	(No symbol) [0x0x4953d2]
+	(No symbol) [0x0x471524]
+	(No symbol) [0x0x492bcb]
+	(No symbol) [0x0x4712d6]
+	(No symbol) [0x0x440910]
+	(No symbol) [0x0x441784]
+	GetHandleVerifier [0x0x8538b3+2439203]
+	GetHandleVerifier [0x0x84eae2+2419282]
+	GetHandleVerifier [0x0x63712a+225434]
+	GetHandleVerifier [0x0x626e08+159096]
+	GetHandleVerifier [0x0x62dd5d+187597]
+	GetHandleVerifier [0x0x617ad8+96840]
+	GetHandleVerifier [0x0x617c62+97234]
+	GetHandleVerifier [0x0x60277a+9962]
+	BaseThreadInitThunk [0x0x77055d49+25]
+	RtlInitializeExceptionChain [0x0x7761d09b+107]
+	RtlGetAppContainerNamedObjectPath [0x0x7761d021+561]
+
+21-Aug-25 21:33:12::__main__::INFO::Optimizing about section
+21-Aug-25 21:33:29::__main__::ERROR::Failed to update about section: Message: invalid session id: session deleted as the browser has closed the connection
+from disconnected: not connected to DevTools
+  (Session info: chrome=139.0.7258.129)
+Stacktrace:
+	GetHandleVerifier [0x0x60ffc3+65331]
+	GetHandleVerifier [0x0x610004+65396]
+	(No symbol) [0x0x403f63]
+	(No symbol) [0x0x3f38e0]
+	(No symbol) [0x0x411709]
+	(No symbol) [0x0x477e4c]
+	(No symbol) [0x0x4924d9]
+	(No symbol) [0x0x4712d6]
+	(No symbol) [0x0x440910]
+	(No symbol) [0x0x441784]
+	GetHandleVerifier [0x0x8538b3+2439203]
+	GetHandleVerifier [0x0x84eae2+2419282]
+	GetHandleVerifier [0x0x63712a+225434]
+	GetHandleVerifier [0x0x626e08+159096]
+	GetHandleVerifier [0x0x62dd5d+187597]
+	GetHandleVerifier [0x0x617ad8+96840]
+	GetHandleVerifier [0x0x617c62+97234]
+	GetHandleVerifier [0x0x60277a+9962]
+	BaseThreadInitThunk [0x0x77055d49+25]
+	RtlInitializeExceptionChain [0x0x7761d09b+107]
+	RtlGetAppContainerNamedObjectPath [0x0x7761d021+561]
+
+21-Aug-25 21:33:29::__main__::ERROR::Optimization failed: Message: invalid session id
+Stacktrace:
+	GetHandleVerifier [0x0x60ffc3+65331]
+	GetHandleVerifier [0x0x610004+65396]
+	(No symbol) [0x0x403dc0]
+	(No symbol) [0x0x43fbd8]
+	(No symbol) [0x0x471396]
+	(No symbol) [0x0x46cf70]
+	(No symbol) [0x0x46c4f6]
+	(No symbol) [0x0x3d59b5]
+	(No symbol) [0x0x3d5f0e]
+	(No symbol) [0x0x3d639d]
+	GetHandleVerifier [0x0x8538b3+2439203]
+	GetHandleVerifier [0x0x84eae2+2419282]
+	GetHandleVerifier [0x0x63712a+225434]
+	GetHandleVerifier [0x0x626e08+159096]
+	GetHandleVerifier [0x0x62dd5d+187597]
+	(No symbol) [0x0x3d5680]
+	(No symbol) [0x0x3d4e8e]
+	GetHandleVerifier [0x0x96a2ec+3580508]
+	BaseThreadInitThunk [0x0x77055d49+25]
+	RtlInitializeExceptionChain [0x0x7761d09b+107]
+	RtlGetAppContainerNamedObjectPath [0x0x7761d021+561]
+
+21-Aug-25 21:33:29::__main__::INFO::Closing browser
