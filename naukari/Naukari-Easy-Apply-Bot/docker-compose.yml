@@ -1,0 +1,33 @@
+# ==== docker-compose.yml ====
+version: '3.8'
+
+services:
+  job-automation:
+    build: .
+    container_name: job-automation
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./resume.pdf:/app/resume.pdf
+      - ./custom_resumes:/app/custom_resumes
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+    environment:
+      - DISPLAY=:99
+    network_mode: "host"
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=password
+    restart: unless-stopped
+
+volumes:
+  n8n_data:

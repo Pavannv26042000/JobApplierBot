@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  job-bot:
+    build: .
+    container_name: job-applier-bot
+    volumes:
+      - ./.env:/app/.env
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+      - ./custom_resumes:/app/custom_resumes
+      - ./tailored_resumes:/app/tailored_resumes
+    environment:
+      - DISPLAY=:99
+    env_file:
+      - .env
+    network_mode: "host"
+    restart: "no"
+    command: ["python", "orchestrator.py", "--platform", "both", "--mode", "full"]
+
+  job-bot-linkedin:
+    build: .
+    container_name: job-bot-linkedin
+    volumes:
+      - ./.env:/app/.env
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    environment:
+      - DISPLAY=:99
+    network_mode: "host"
+    restart: "no"
+    command: ["python", "orchestrator.py", "--platform", "linkedin"]
+    profiles:
+      - linkedin
+
+  job-bot-naukri:
+    build: .
+    container_name: job-bot-naukri
+    volumes:
+      - ./.env:/app/.env
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+    env_file:
+      - .env
+    environment:
+      - DISPLAY=:99
+    network_mode: "host"
+    restart: "no"
+    command: ["python", "orchestrator.py", "--platform", "naukri"]
+    profiles:
+      - naukri
+
+  dashboard:
+    build: .
+    container_name: job-bot-dashboard
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.env:/app/.env
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+    env_file:
+      - .env
+    restart: unless-stopped
+    command: ["python", "orchestrator.py", "--mode", "dashboard"]
+    profiles:
+      - dashboard
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=password
+    restart: unless-stopped
+    profiles:
+      - n8n
+
+volumes:
+  n8n_data:

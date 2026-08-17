@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Credentials & Secrets
+.env
+config.yaml
+Config.yaml
+*.pem
+*.key
+
+# Resumes & Generated PDFs
+*.pdf
+tailored_resumes/
+custom_resumes/
+
+# Logs & Output
+*.log
+logs/
+*.csv
+
+# Application Data
+bible/
+reports/
+n8n_workflows/
+application_history.json
+application_stats.json
+failed_jobs.json
+
+# Screenshots
+*.png
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+*.pid

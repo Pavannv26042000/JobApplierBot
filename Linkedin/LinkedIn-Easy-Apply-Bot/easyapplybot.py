@@ -15,6 +15,20 @@ import pandas as pd
 import pyautogui
 import yaml
 from bs4 import BeautifulSoup
+from PyPDF2 import PdfReader
+from fpdf import FPDF
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from core.ai_service import GroqAIService
+from core.ats_scorer import ATSScorer
+from core.resume_manager import ResumeManager as CoreResumeManager
+from core.question_answerer import QuestionAnswerer
+from core.browser import create_browser
+from core.job_deduplicator import JobDeduplicator
+from core.config import load_config
+from core.notifier import Notifier, EmailNotifier
+
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
@@ -61,6 +75,13 @@ class EasyApplyBot:
                  # profile_path,
                  salary,
                  rate,
+                 groq_api_key: str = "",
+                 groq_model: str = "llama3-70b-8192",
+                 ats_target_score: int = 80,
+                 min_ats_to_apply: int = 60,
+                 tailor_resume: bool = True,
+                 referral_enabled: bool = False,
+                 referral_max_contacts: int = 3,
                  uploads={},
                  filename='output.csv',
                  blacklist=[],
@@ -88,6 +109,7 @@ class EasyApplyBot:
         
 
         self.uploads = uploads
+        self.original_resume_path = self.uploads.get("Resume")
         self.salary = salary
         self.rate = rate
         # self.profile_path = profile_path
@@ -95,13 +117,31 @@ class EasyApplyBot:
         self.appliedJobIDs: list = past_ids if past_ids != None else []
         self.filename: str = filename
         self.options = self.browser_options()
-        self.browser = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=self.options)
+        self.browser = create_browser()
         self.wait = WebDriverWait(self.browser, 30)
         self.blacklist = blacklist
         self.blackListTitles = blackListTitles
         self.start_linkedin(username, password)
         self.phone_number = phone_number
         self.experience_level = experience_level
+
+        # Tailoring + ATS + AI agent config
+        self.groq_api_key = groq_api_key
+        self.ats_target_score = ats_target_score
+        self.min_ats_to_apply = min_ats_to_apply
+        self.tailor_resume = tailor_resume
+        self.referral_enabled = referral_enabled
+        self.referral_max_contacts = referral_max_contacts
+
+        self.ai_service = GroqAIService(api_key=groq_api_key, model=groq_model)
+        self.ats_scorer = ATSScorer()
+        self.deduplicator = JobDeduplicator()
+
+        # Load resume text once for AI + ATS scoring.
+        self.resume_text = self._load_resume_text(self.uploads.get("Resume"))
+        self.resume_text = (self.resume_text or "")[:12000]
+        self.current_jd_text = ""
+        self.question_answerer = QuestionAnswerer(ai_service=self.ai_service, qa_file='qa.csv', resume_text=self.resume_text, salary=self.salary)
 
 
         self.locator = {
@@ -132,7 +172,7 @@ class EasyApplyBot:
         if self.qa_file.is_file():
             df = pd.read_csv(self.qa_file)
             for index, row in df.iterrows():
-                self.answers[row['Question']] = row['Answer']
+                self.answers[str(row['Question']).lower()] = row['Answer']
         #if qa file does exist, load it
         else:
             df = pd.DataFrame(columns=["Question", "Answer"])
@@ -312,7 +352,7 @@ class EasyApplyBot:
                     log.info(f"Applied to {jobID}")
                 else:
                     log.info(f"Failed to apply to {jobID}")
-                jobIDs[jobID] == applied
+                jobIDs[jobID] = applied
 
     def apply_to_job(self, jobID):
         # #self.avoid_lock() # annoying
@@ -323,13 +363,24 @@ class EasyApplyBot:
         # let page load
         time.sleep(1)
 
+        # Extract job description text + (optionally) tailor resume for ATS fit.
+        self.current_jd_text = self.extract_job_description()
+        if self.tailor_resume:
+            tailored_resume_path = self.prepare_tailored_resume_for_job(jobID, self.current_jd_text)
+            if tailored_resume_path is None:
+                log.info(f"Skipping {jobID}: ATS too low after tailoring.")
+                self.write_to_file(False, jobID, self.browser.title, False)
+                return False
+            if tailored_resume_path:
+                self.uploads["Resume"] = tailored_resume_path
+
         # get easy apply button
         button = self.get_easy_apply_button()
 
 
         # word filter to skip positions not wanted
         if button is not False:
-            if any(word in self.browser.title for word in blackListTitles):
+            if any(word in self.browser.title for word in self.blackListTitles):
                 log.info('skipping this application, a blacklisted keyword was found in the job position')
                 string_easy = "* Contains blacklisted keyword"
                 result = False
@@ -343,6 +394,7 @@ class EasyApplyBot:
                 result: bool = self.send_resume()
                 if result:
                     string_easy = "*Applied: Sent Resume"
+                    self.try_connect_and_request_referral(jobID)
                 else:
                     string_easy = "*Did not apply: Failed to send Resume"
         elif "You applied on" in self.browser.page_source:
@@ -377,6 +429,162 @@ class EasyApplyBot:
         with open(self.filename, 'a+') as f:
             writer = csv.writer(f)
             writer.writerow(toWrite)
+
+    @staticmethod
+    def _parse_json_from_text(text: str) -> dict:
+        """Best-effort JSON parsing from LLM output."""
+        return GroqAIService._parse_json_from_text(text)
+
+    def _load_resume_text(self, resume_path: str | None) -> str:
+        if not resume_path or not os.path.exists(resume_path):
+            log.warning(f"Resume path not found: {resume_path}")
+            return ""
+        if resume_path.lower().endswith(".pdf"):
+            reader = PdfReader(resume_path)
+            parts: list[str] = []
+            for page in reader.pages:
+                try:
+                    parts.append(page.extract_text() or "")
+                except Exception:
+                    continue
+            return "\n".join(parts).strip()
+        # Fallback: we only auto-tailor from PDF for now.
+        log.warning("Only PDF resume auto-tailoring is supported right now.")
+        return ""
+
+    def extract_job_description(self) -> str:
+        """Extract job description text from the current LinkedIn job page."""
+        try:
+            soup = BeautifulSoup(self.browser.page_source, "html.parser")
+            for tag in soup(["script", "style"]):
+                tag.decompose()
+            text = soup.get_text(" ", strip=True)
+            # Cap size to keep prompt size reasonable.
+            return text[:6000]
+        except Exception as e:
+            log.error(f"Failed to extract job description: {e}")
+            return ""
+
+    def calculate_ats_score_from_text(self, resume_text: str, job_description: str) -> float:
+        """Lightweight ATS score based on keyword overlap + section presence."""
+        return self.ats_scorer.calculate_score(resume_text, job_description)
+
+    def _generate_pdf_from_text(self, text: str, output_pdf_path: str) -> None:
+        Path(output_pdf_path).parent.mkdir(parents=True, exist_ok=True)
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+        pdf.set_font("Helvetica", size=10)
+        epw = pdf.epw
+        for line in (text or "").splitlines():
+            pdf.x = pdf.l_margin
+            pdf.multi_cell(epw, 5, line.strip() if line.strip() else " ", new_x="LMARGIN", new_y="NEXT")
+        pdf.output(output_pdf_path)
+
+    def analyze_jd_for_tailoring(self, job_description: str) -> list[str]:
+        """Use LLM to find missing skills/keywords for the current JD."""
+        return self.ai_service.get_missing_keywords(self.resume_text, job_description)
+
+    def prepare_tailored_resume_for_job(self, job_id: str, job_description: str) -> str | None:
+        if not self.tailor_resume:
+            return self.original_resume_path
+
+        if not self.resume_text or not job_description:
+            return self.original_resume_path
+
+        ats_before = self.calculate_ats_score_from_text(self.resume_text, job_description)
+        if ats_before >= self.ats_target_score:
+            # Still keep the original resume; it is already "good enough".
+            return self.original_resume_path
+
+        missing_keywords = self.analyze_jd_for_tailoring(job_description)
+        tailored_text = (self.resume_text or "").strip()
+        tailored_text += "\n\nSkills: " + ", ".join(missing_keywords[:25])
+
+        ats_after = self.calculate_ats_score_from_text(tailored_text, job_description)
+        if ats_after < self.min_ats_to_apply:
+            log.warning(f"Skipping {job_id}: ATS after tailoring {ats_after:.1f} below min {self.min_ats_to_apply}")
+            return None
+
+        output_pdf_path = str(Path("tailored_resumes") / f"resume_{job_id}.pdf")
+        self._generate_pdf_from_text(tailored_text, output_pdf_path)
+        return output_pdf_path
+
+    def llm_answer_application_question(self, question: str) -> str:
+        """Answer a form question using the resume (+ current JD when available)."""
+        return self.ai_service.answer_application_question(question, self.resume_text, self.current_jd_text)
+
+    def try_connect_and_request_referral(self, jobID: str) -> bool:
+        """Best-effort referral request after a successful application.
+
+        This is intentionally conservative: it only tries a few profiles and swallows most failures.
+        """
+        if not self.referral_enabled:
+            return False
+
+        try:
+            page_title = self.browser.title or ""
+            # Heuristic parsing of "Job Title at Company | LinkedIn Jobs"
+            job_title = page_title.split(" at ")[0].strip() if " at " in page_title else page_title
+            company = ""
+            if " at " in page_title:
+                company = page_title.split(" at ", 1)[1].split(" | ")[0].strip()
+
+            # Extract a company slug from the HTML.
+            m = re.search(r"/company/([a-zA-Z0-9-]+)/", self.browser.page_source or "")
+            if not m:
+                return False
+            company_slug = m.group(1)
+
+            people_url = f"https://www.linkedin.com/company/{company_slug}/people/"
+            self.browser.get(people_url)
+            time.sleep(3)
+
+            # Scroll to load people cards.
+            for _ in range(3):
+                self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(1)
+
+            connect_buttons = self.browser.find_elements(By.XPATH, "//button[contains(., 'Connect')]")
+            if not connect_buttons:
+                return False
+
+            note_message = (
+                f"Hi! I'm interested in the {job_title} role at {company or 'your company'}. "
+                f"If you think I'd be a fit, could you share a referral? Thanks!"
+            )
+
+            connect_buttons[0].click()
+            time.sleep(2)
+
+            # Click “Add a note” if present
+            try:
+                add_note_btn = self.browser.find_element(By.XPATH, "//button[contains(., 'Add a note')]")
+                add_note_btn.click()
+                time.sleep(1)
+            except Exception:
+                pass
+
+            # Fill note
+            try:
+                textarea = self.browser.find_element(By.XPATH, "//textarea")
+                textarea.clear()
+                textarea.send_keys(note_message)
+            except Exception:
+                return False
+
+            # Send
+            try:
+                send_btn = self.browser.find_element(By.XPATH, "//button[contains(., 'Send')]")
+                send_btn.click()
+            except Exception:
+                # Note sent UI may differ; treat as best-effort.
+                pass
+
+            return True
+        except Exception as e:
+            log.error(f"Referral request failed for {jobID}: {e}")
+            return False
 
     def get_job_page(self, jobID):
 
@@ -575,22 +783,13 @@ class EasyApplyBot:
                     log.error(e)
                     continue
 
-            elif self.is_present(self.locator["text_select"]):
-               pass
 
-            if "Yes" or "No" in answer: #radio button
-                try: #debug this
-                    input = form.find_element(By.CSS_SELECTOR, "input[type='radio'][value={}]".format(answer))
-                    form.execute_script("arguments[0].click();", input)
-                except:
-                    pass
-
-
-            else:
-                input = form.find_element(By.CLASS_NAME, "artdeco-text-input--input")
-                input.send_keys(answer)
 
     def ans_question(self, question): #refactor this to an ans.yaml file
+        # Prefer cached answers from qa.csv (stored as lowercase keys).
+        if question in self.answers:
+            return self.answers[question]
+
         answer = None
         if "how many" in question:
             answer = "1"
@@ -625,10 +824,10 @@ class EasyApplyBot:
         elif "are you legally" in question:
             answer = "Yes"
         else:
-            log.info("Not able to answer question automatically. Please provide answer")
-            #open file and document unanswerable questions, appending to it
-            answer = "user provided"
-            time.sleep(15)
+            answer = self.question_answerer.answer(question, self.current_jd_text)
+            if answer == "user provided":
+                log.info("Not able to answer question automatically. Please provide answer")
+                time.sleep(15)
 
             # df = pd.DataFrame(self.answers, index=[0])
             # df.to_csv(self.qa_file, encoding="utf-8")
@@ -728,6 +927,11 @@ if __name__ == '__main__':
                        parameters['phone_number'],
                        parameters['salary'],
                        parameters['rate'], 
+                       groq_api_key=parameters.get('groq', {}).get('api_key', os.getenv('GROQ_API_KEY', '')),
+                       ats_target_score=parameters.get('ats', {}).get('target_score', 80),
+                       min_ats_to_apply=parameters.get('ats', {}).get('min_to_apply', 60),
+                       referral_enabled=parameters.get('referral', {}).get('enabled', False),
+                       referral_max_contacts=parameters.get('referral', {}).get('max_contacts', 3),
                        uploads=uploads,
                        filename=output_filename,
                        blacklist=blacklist,

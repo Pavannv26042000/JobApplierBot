@@ -1,36 +1,48 @@
-username: yourMailID
-password: Password
-phone_number: 7899569686
+# LinkedIn Easy Apply Bot Configuration
+# =======================================
+# Credentials are loaded from .env file (see .env.example)
 
-profile_path: '' #can be empty, will default to 'C:\Users\<user>\AppData\Local\Google\Chrome\User Data\Default'
-
-
+# Job Search
 positions:
-- Software Engineer
-- Software Developer
-- Java Developer
-- Spring Developer
-- GoLang Developer
-
+  - Software Engineer
+  - Software Developer
+  - Java Developer
+  - Spring Developer
+  - GoLang Developer
 
 locations:
-- Bengaluru
-- Remote
+  - Bengaluru
+  - Remote
 
 salary: 60,000
 rate: 25
-# --------- Optional Parameters -------
-uploads:
-  Resume: C:\Users\pavan\Downloads\Pavan_NV_Resume.pdf
-  Cover Letter: C:\Users\pavan\Downloads\Pavan_NV_Resume.pdf
-  #Photo: # PATH TO photo
 
+# AI (Groq)
+groq:
+  api_key: ""  # Set GROQ_API_KEY in .env instead
+
+# ATS Settings
+ats:
+  target_score: 80
+  min_to_apply: 60
+  keywords_to_add: []
+
+# Referral Requests
+referral:
+  enabled: false
+  max_contacts: 3
+
+# Uploads (set RESUME_PATH in .env instead, or use these)
+uploads:
+  Resume: ""
+  Cover Letter: ""
 
 output_filename:
-- /Users/pavan/Desktop/Linkedin/LinkedIn-Easy-Apply-Bot/out.csv
+  - output.csv
 
+# Blacklist
 # blacklist:
-- Alten
+#   - CompanyName
 
 experience_level:
   # - 1 # Entry level

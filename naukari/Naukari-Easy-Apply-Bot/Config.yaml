@@ -1,7 +1,26 @@
+# Naukri Easy Apply Bot Configuration
+# =====================================
+# Credentials are loaded from .env file (see .env.example)
+
+ats:
+  keywords_to_add: []
+  min_to_apply: 60
+  target_score: 80
+
+email:
+  sender_email: ''  # Set SENDER_EMAIL in .env
+  sender_password: ''  # Set SENDER_PASSWORD in .env
+  smtp_port: 587
+  smtp_server: smtp.gmail.com
+
+groq:
+  api_key: ''  # Set GROQ_API_KEY in .env
+
 naukri:
-  email: 
-  password: 
-  role: "java developer"
-  location: "bengaluru"
+  custom_resume_path: resume.pdf
+  email: ''  # Set NAUKRI_EMAIL in .env
+  location: bengaluru
+  max_applications: 10
   max_pages: 10
-  max_applications: 1000
+  password: ''  # Set NAUKRI_PASSWORD in .env
+  role: java developer
